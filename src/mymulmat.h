@@ -11,6 +11,7 @@ public:
     void multiply();
 private:
     int n, m, k;
-    float *A, *B, *C;
+    float *A, *B, *C, *tB, *tmp;
+    float* transpose(float *M, int row, int col);
 };
 

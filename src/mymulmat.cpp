@@ -12,8 +12,8 @@
 #include <stdlib.h>
 #include <malloc.h>
 
-#include <immintrin.h>
-#include <xmmintrin.h>
+//#include <immintrin.h>
+//#include <xmmintrin.h>
 
 #include <omp.h>
 #include <mpi.h>
@@ -27,11 +27,11 @@ MyMulMat::MyMulMat()
 
 MyMulMat::~MyMulMat()
 {
-  _mm_free(A);
-  _mm_free(B);
-  _mm_free(C);
-  _mm_free(tB);
-  _mm_free(tmp);
+  free(A);
+  free(B);
+  free(C);
+  // free(tB);
+  // free(tmp);
   std::cout << "mymul destructed" << std::endl;
 }
 
@@ -39,7 +39,7 @@ using std::cout;
 using std::endl;
 
 float* MyMulMat::transpose(float *M,int row,int col){
-  float *tM = (float*)_mm_malloc( sizeof(float) * row * col, 32);
+    float *tM = (float*)malloc( sizeof(float) * row * col);
   for (int i = 0; i < row; i++) {
     for (int j = 0; j < col; j++) {
       tM[j*row+i] = M[i*col+j];
@@ -59,14 +59,14 @@ void MyMulMat::init(int n, int m, int k,
     *lc = m +  (7 - (m-1)%8);
     int i, j = 0;
     //プロセス数とプロセス番号をGET
-//    int rank = MPI::COMM_WORLD.Get_rank();
-//    int size = MPI::COMM_WORLD.Get_size();
+    int rank = MPI::COMM_WORLD.Get_rank();
+    int size = MPI::COMM_WORLD.Get_size();
 
     //rank0のプロセスの場合、行列の面積を確保
 //    if( rank == 0 ){
-        *A = (float*)_mm_malloc( sizeof(float) * n*(*la), 32);
-        *B = (float*)_mm_malloc( sizeof(float) * k*(*lb), 32);
-        *C = (float*)_mm_malloc( sizeof(float) * n*(*lc), 32);
+        *A = (float*)malloc( sizeof(float) * n*(*la));
+        *B = (float*)malloc( sizeof(float) * k*(*lb));
+        *C = (float*)malloc( sizeof(float) * n*(*lc));
 
     /* 使わない所0埋め。これ意味あるのかな...*/
         for (i = 0; i < n; i++) {
@@ -91,7 +91,7 @@ void MyMulMat::init(int n, int m, int k,
         cout << "   b % 32 = " << (long)(*B)%32 <<endl;
         cout << "   c % 32 = " << (long)(*C)%32 <<endl;
         this->tB = tB;
-        this->tmp = (float*)_mm_malloc( sizeof(float) * 8, 32);
+        this->tmp = (float*)malloc( sizeof(float) * 8);
     
         this->n = n; this->m = m; this->k = k;
         this->A = *A; this->B = *B; this->C = *C;
@@ -123,7 +123,7 @@ void MyMulMat::multiply()
             MPI::COMM_WORLD.Isend(&tB[k*i*m/(size-1)], k*m/(size-1), MPI_FLOAT, i, 2);
         }
     }
-
+    printf("ここまでいるよ %d \n", rank);
     if(rank != 0){
         for( j = 0 ; j < n/(size-1) ; j++){
             for( l = 0 ; l < m/(size-1) ; l++){
@@ -133,7 +133,7 @@ void MyMulMat::multiply()
             }
         }
     }
-    
+    printf("ここにもいるよw %d \n", rank);
     for( i = 0 ; i < n/(size-1) ; i++ ){
         if(rank != 0){
             MPI::COMM_WORLD.Isend(&C[i*m/(size-1)], m/(size-1), MPI_FLOAT, 0, i);
@@ -210,5 +210,6 @@ void MyMulMat::multiply()
       }
     }
     */
+    free(tB);
     return;
 }
