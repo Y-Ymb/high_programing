@@ -1,0 +1,14 @@
+<free>
+intel/free128_128_129-0.dat
+intel/free16_16_16-0.dat
+<square>
+intel/square128-0.dat
+intel/square256-0.dat
+<symm>
+intel/symm128_128-0.dat
+<trmm>
+intel/trmm128_129-0.dat
+<mv>
+intel/mv256_512-0.dat
+intel/mv128_128-0.dat
+<hemm>

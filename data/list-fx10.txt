@@ -1,0 +1,14 @@
+<free>
+sparc/free128_128_129-0.dat
+sparc/free16_16_16-0.dat
+<square>
+sparc/square128-0.dat
+sparc/square256-0.dat
+<symm>
+sparc/symm128_128-0.dat
+<trmm>
+sparc/trmm128_129-0.dat
+<mv>
+sparc/mv256_512-0.dat
+sparc/mv128_128-0.dat
+<hemm>
