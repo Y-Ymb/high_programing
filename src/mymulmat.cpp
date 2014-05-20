@@ -6,7 +6,7 @@
 #include <omp.h>
 #include <mpi.h>
 
-#define size 4
+#define size 2
 
 MyMulMat::MyMulMat()
 {
@@ -107,9 +107,12 @@ void MyMulMat::multiply()
     MPI_Bcast(A, n2*k, MPI_FLOAT, 0, my_groupB);
  
     for (int i = 0; i < n2; i++){
-        for(int j = 0 ; j < m2 ; j++){
+        for(int j = 0 ; j < m2 ; j+=4){
             for(int l = 0 ; l < k ; l++){ 
                 C[i*m/size+j] += A[i*k+l] * B[j*k+l];
+                C[i*m/size+j+1] += A[i*k+l] * B[(j+1)*k+l];
+                C[i*m/size+j+2] += A[i*k+l] * B[(j+2)*k+l];
+                C[i*m/size+j+3] += A[i*k+l] * B[(j+3)*k+l];
             }
         }
     }
