@@ -9,6 +9,7 @@ public:
               int *la, int *lb, int *lc,
               float **A, float **B, float **C);
     void multiply();
+    void setResult(float *C, float *storage_C);
 private:
     int n, m, k;
     float *A, *B, *C, *tB, *tmp;

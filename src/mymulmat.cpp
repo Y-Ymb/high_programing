@@ -6,6 +6,8 @@
 #include <omp.h>
 #include <mpi.h>
 
+#define size 4
+
 MyMulMat::MyMulMat()
 {
     std::cout << "mymul constructed" << std::endl;
@@ -40,12 +42,16 @@ float* MyMulMat::transpose(float *M, int row, int col){
 }
 
 void MyMulMat::setResult(float *C,float *storage_C){
-    int i,j;
-    int m2 = m/4;
-    int n2 = n/4;
-    for(i=0;i<n2;i++){
-        for(j=0;j<m2;j++){
-            C[i*m+j] = storage_C[i*m2+j];
+    int i,j, l;
+    int k2 = size;
+    int m2 = m/size;
+    int n2 = n/size;
+    
+    for(l=0;l<k2;l++){
+        for(i=0;i<n2;i++){
+            for(j=0;j<m2;j++){
+                C[i*m+j+l*m2] = storage_C[l*n2*m2+i*m2+j];
+            }
         }
     }
 }
@@ -53,30 +59,30 @@ void MyMulMat::setResult(float *C,float *storage_C){
 
 
 
-
 void MyMulMat::multiply()
 {
     std::cout << "mymul multiply" << std::endl;
-    int size = MPI::COMM_WORLD.Get_size();
+    int siz = MPI::COMM_WORLD.Get_size();
     int rank = MPI::COMM_WORLD.Get_rank();
-    
+    int n2 = n/size;
+    int m2 = m/size;
     int my_rankA;//初めのn分割したAを配るコミュニケーター
     int my_rankB;
 
     MPI_Group group_world;
     MPI_Group first_row_group;
     MPI_Comm my_groupA;
-    int* process_ranks = (int*)malloc(5*sizeof(int));
+    int* process_ranks = (int*)malloc(size*sizeof(int));
     
-    for(int proc = 0 ; proc < 4 ; proc++){
+    for(int proc = 0 ; proc < size ; proc++){
         process_ranks[proc] = proc;
     }
     
     MPI_Comm_group(MPI_COMM_WORLD, &group_world);
-    MPI_Group_incl(group_world, 5, process_ranks, &first_row_group);
+    MPI_Group_incl(group_world, size, process_ranks, &first_row_group);
     MPI_Comm_create(MPI_COMM_WORLD, first_row_group, &my_groupA);
 
-    my_rankB = rank % 4;    //ブロードキャストされたBをスキャターするコミュニケータ
+    my_rankB = rank % size;    //ブロードキャストされたBをスキャターするコミュニケータ
 //4プロセスの場合を想定
     //コミュニケータを作成
     MPI_Comm my_groupB;
@@ -85,33 +91,45 @@ void MyMulMat::multiply()
     MPI_Comm_split(MPI_COMM_WORLD, my_rankB, rank, &my_groupB);
 
     // if(my_rankA==0){
-    if(rank == 0 || rank == 1 || rank == 2 || rank == 3){
-        MPI_Scatter(A, n*k/4, MPI_FLOAT, A, n*k/4, MPI_FLOAT, 0, my_groupA);
+    if(rank < size){
+        MPI_Scatter(A, n2*k, MPI_FLOAT, A, n2*k, MPI_FLOAT, 0, my_groupA);
         MPI_Bcast(B, m*k, MPI_FLOAT, 0, my_groupA);
     }
         // }
 
+    if(rank < size ){
+        MPI_Barrier(my_groupA);
+    }
+
     float* tB = transpose(B, k, m);
 
-    MPI_Scatter(tB, m*k/4, MPI_FLOAT, B, m*k/4, MPI_FLOAT, 0, my_groupB);
-    MPI_Bcast(A, n*k/4, MPI_FLOAT, 0, my_groupB);
+    MPI_Scatter(tB, m2*k, MPI_FLOAT, B, m2*k, MPI_FLOAT, 0, my_groupB);
+    MPI_Bcast(A, n2*k, MPI_FLOAT, 0, my_groupB);
  
-    for (int i = 0; i < n/4; i++){
-        for(int j = 0 ; j < m/4 ; j++){
+    for (int i = 0; i < n2; i++){
+        for(int j = 0 ; j < m2 ; j++){
             for(int l = 0 ; l < k ; l++){ 
-                C[i*m/4+j] += A[i*k+l] * B[j*k+l];
+                C[i*m/size+j] += A[i*k+l] * B[j*k+l];
             }
         }
     }
+    // MPI_Barrier(my_groupB);
     // std::cout << C[0] << std::endl;
-    
-    
-    MPI_Gather(C, n*m/16, MPI_FLOAT, C, n*m/16, MPI_FLOAT, 0, my_groupB);
-    //setResult(C, tmpC);
-    
-    if(rank == 0 || rank == 1 || rank == 2 || rank == 3 ){
-        MPI_Gather(C, m, MPI_FLOAT, C, m, MPI_FLOAT, 0, my_groupA);
+
+    MPI_Gather(C, n*m/(size*size), MPI_FLOAT, tmpC, n*m/(size*size), MPI_FLOAT, 0, my_groupB);
+  
+    setResult(C, tmpC);
+
+/*
+     if(rank == 0 || rank == 1){
+        for(int f = 0 ; f < 8 ; f++){
+            printf("rank:%d C[%d]:%e\n", rank, f, C[f]);
+        }
     }
-    // setResult(C, tmpC);
+    */
+    if( rank < size ){
+        MPI_Gather(C, n*m/size, MPI_FLOAT, C, n*m/size, MPI_FLOAT, 0, my_groupA);
+    }
+    //setResult(C, tmpC);
     return;
 }
