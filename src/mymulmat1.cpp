@@ -6,8 +6,8 @@
 #include <omp.h>
 #include <mpi.h>
 
-#define size 1
-#define secondsize 1
+#define size 4
+#define secondsize 2
 
 #define length 16
 
