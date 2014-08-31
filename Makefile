@@ -4,7 +4,7 @@
 ################################
 
 # 自分のつくったものに合うように変更すること
-YOURSRCS  := mymulmat.cpp
+YOURSRCS  := mymulmat1.cpp
 YOURCLASS := MyMulMat
 YOURCLASSHEADER := mymulmat.h
 
