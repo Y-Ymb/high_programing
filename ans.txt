@@ -1,0 +1,43 @@
+# Run
+mymul constructed
+# Prepare 
+# intel/square256-0.dat is selected!
+# n=256 m=256 k=256
+mymul init
+mymul constructed
+mymul constructed
+# Run 
+mymul multiply
+mymul constructed
+mymul init
+mymul constructed
+mymul multiply
+mymul init
+mymul multiply
+mymul init
+mymul multiply
+mymul constructed
+mymul init
+mymul init
+mymul multiply
+mymul multiply
+mymul constructed
+mymul init
+mymul multiply
+mymul constructed
+mymul init
+mymul multiply
+mymul destructed
+mymul destructed
+mymul destructed
+mymul destructed
+mymul destructed
+mymul destructed
+mymul destructed
+# Check 
+# (Delta = 0.5)
+# Elapsed: 163.562 [ms]
+# Flops:   0.205148 [GFLOPS]
+# Wrong:   64511 / 65536
+
+mymul destructed

@@ -7,6 +7,9 @@
 #include <mpi.h>
 
 #define size 2
+#define secondsize 2
+
+#define length 16
 
 MyMulMat::MyMulMat()
 {
@@ -43,8 +46,8 @@ float* MyMulMat::transpose(float *M, int row, int col){
 
 void MyMulMat::setResult(float *C,float *storage_C){
     int i,j, l;
-    int k2 = size;
-    int m2 = m/size;
+    int k2 = secondsize;
+    int m2 = m/secondsize;
     int n2 = n/size;
     
     for(l=0;l<k2;l++){
@@ -65,7 +68,7 @@ void MyMulMat::multiply()
     int siz = MPI::COMM_WORLD.Get_size();
     int rank = MPI::COMM_WORLD.Get_rank();
     int n2 = n/size;
-    int m2 = m/size;
+    int m2 = m/secondsize;
     int my_rankA;//初めのn分割したAを配るコミュニケーター
     int my_rankB;
 
@@ -107,22 +110,24 @@ void MyMulMat::multiply()
     MPI_Bcast(A, n2*k, MPI_FLOAT, 0, my_groupB);
  
     for (int i = 0; i < n2; i++){
-        for(int j = 0 ; j < m2 ; j+=4){
+        for(int j = 0 ; j < m2 ; j+=1){
             for(int l = 0 ; l < k ; l++){ 
-                C[i*m/size+j] += A[i*k+l] * B[j*k+l];
-                C[i*m/size+j+1] += A[i*k+l] * B[(j+1)*k+l];
-                C[i*m/size+j+2] += A[i*k+l] * B[(j+2)*k+l];
-                C[i*m/size+j+3] += A[i*k+l] * B[(j+3)*k+l];
+                C[i*m2 + j] += A[i*k + l] * B[j*k + l];
+//              C[i*m/size+j+1] += A[i*k+l] * B[(j+1)*k+l];
+//              C[i*m/size+j+2] += A[i*k+l] * B[(j+2)*k+l];
+//              C[i*m/size+j+3] += A[i*k+l] * B[(j+3)*k+l];
+//                if( l == k-1 && C[i*m2+j]==0 ){
+//                    printf("だめなのです！！\n");
+//                }
             }
         }
     }
     // MPI_Barrier(my_groupB);
     // std::cout << C[0] << std::endl;
 
-    MPI_Gather(C, n*m/(size*size), MPI_FLOAT, tmpC, n*m/(size*size), MPI_FLOAT, 0, my_groupB);
+    MPI_Gather(C, n2*m2, MPI_FLOAT, tmpC, n2*m2, MPI_FLOAT, 0, my_groupB);
   
     setResult(C, tmpC);
-
 /*
      if(rank == 0 || rank == 1){
         for(int f = 0 ; f < 8 ; f++){
@@ -130,9 +135,10 @@ void MyMulMat::multiply()
         }
     }
     */
-    if( rank < size ){
-        MPI_Gather(C, n*m/size, MPI_FLOAT, C, n*m/size, MPI_FLOAT, 0, my_groupA);
-    }
+      if( rank < size ){
+//     MPI_Barrier(my_groupA);
+    MPI_Gather(C, n2*m, MPI_FLOAT, C, n2*m, MPI_FLOAT, 0, my_groupA);
+         }
     //setResult(C, tmpC);
     return;
 }
